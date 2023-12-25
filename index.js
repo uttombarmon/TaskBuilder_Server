@@ -5,7 +5,11 @@ const port = process.env.PORT || 5200;
 require('dotenv').config()
 //middleware
 app.use(express.json())
-app.use(cors())
+app.use(cors({
+  origin: [
+    'https://taskbuilder-609e1.web.app/'
+]
+}))
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.8gn4coa.mongodb.net/?retryWrites=true&w=majority`;
