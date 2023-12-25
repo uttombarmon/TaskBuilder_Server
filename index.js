@@ -7,7 +7,7 @@ require('dotenv').config()
 app.use(express.json())
 app.use(cors())
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.8gn4coa.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -29,44 +29,59 @@ async function run() {
 
     // user info save api 
     const userCollec = client.db('taskbuilder').collection('users')
-    
-    app.post('/v1/users',async(req,res)=>{
-        try {
-            const userData = req.body.user
-            console.log(userData);
-            const data =await userCollec.insertOne(userData)
-            console.log(data);
-            res.send(data)
-        } catch (error) {
-            res.send(error)
-        }
+
+    app.post('/v1/users', async (req, res) => {
+      try {
+        const userData = req.body.user
+        console.log(userData);
+        const data = await userCollec.insertOne(userData)
+        console.log(data);
+        res.send(data)
+      } catch (error) {
+        res.send(error)
+      }
     })
     const taskColl = client.db('taskbuilder').collection('tasks')
     //get task
-    app.get('/v1/gettask',async(req,res)=>{
+    app.get('/v1/gettask', async (req, res) => {
       const email = req.query.email
       console.log("h");
       const s = {
-        "email":email
+        "email": email
       }
       const tasks = await taskColl.find(s).toArray()
-      if (tasks.length>1) {
-        const h= []
-        const m= []
-        const l = []
-        const ortasks = tasks.sort((a,b)=> a.deadline - b.deadline)
-        // console.log(stasks);
-        const stasks= ortasks.sort((a,b)=>{
-          const order = {"low":1,"medium":2,"high":3}
+      if (tasks.length > 1) {
+        const ortasks = tasks.sort((a, b) => a.deadline - b.deadline)
+        const stasks = ortasks.sort((a, b) => {
+          const order = { "low": 1, "medium": 2, "high": 3 }
           return order[b.priority.toLowerCase()] - order[a.priority.toLowerCase()]
-        }) 
-        // const data = [...h,...m,...l]
-        // console.log(data);
-        return res.send(stasks)    
+        })
+        const todoTasks = stasks.filter(task => task.status === "todo");
+        const ongoingTasks = stasks.filter(task => task.status === "ongoing");
+        const completedTasks = stasks.filter(task => task.status === "completed");
+        const data = {
+          "todo": todoTasks,
+          "ongoing": ongoingTasks,
+          "completed": completedTasks
+        }
+        return res.send(data)
       }
       res.send(tasks)
     })
 
+    // change status api
+    app.put('/v1/changeStatus',async(req,res)=>{
+      const id = req.body.id
+      const status = req.body.status
+      const query = {
+        $set:{
+          "status":status
+        }
+      }
+      const data = await taskColl.updateOne({_id: new ObjectId(id)},query)
+      console.log(data);
+      res.send(data)
+    })
 
 
 
@@ -77,9 +92,9 @@ async function run() {
   }
 }
 run().catch(console.dir);
-app.listen(port,()=>{
-    console.log('TaskBuilder is running port : 5200');
+app.listen(port, () => {
+  console.log('TaskBuilder is running port : 5200');
 })
 app.get('/', (req, res) => {
-    res.send("TaskBuilder server is running...");
+  res.send("TaskBuilder server is running...");
 })
