@@ -1,7 +1,7 @@
 const express = require('express')
 const app = express()
 const cors = require('cors')
-const port = process.env.PORT || 4000;
+const port = process.env.PORT || 5200;
 require('dotenv').config()
 //middleware
 app.use(express.json())
@@ -41,6 +41,31 @@ async function run() {
             res.send(error)
         }
     })
+    const taskColl = client.db('taskbuilder').collection('tasks')
+    //get task
+    app.get('/v1/gettask',async(req,res)=>{
+      const email = req.query.email
+      console.log("h");
+      const s = {
+        "email":email
+      }
+      const tasks = await taskColl.find(s).toArray()
+      if (tasks.length>1) {
+        const h= []
+        const m= []
+        const l = []
+        const ortasks = tasks.sort((a,b)=> a.deadline - b.deadline)
+        // console.log(stasks);
+        const stasks= ortasks.sort((a,b)=>{
+          const order = {"low":1,"medium":2,"high":3}
+          return order[b.priority.toLowerCase()] - order[a.priority.toLowerCase()]
+        }) 
+        // const data = [...h,...m,...l]
+        // console.log(data);
+        return res.send(stasks)    
+      }
+      res.send(tasks)
+    })
 
 
 
@@ -53,7 +78,7 @@ async function run() {
 }
 run().catch(console.dir);
 app.listen(port,()=>{
-    console.log('TaskBuilder is running port : 4000');
+    console.log('TaskBuilder is running port : 5200');
 })
 app.get('/', (req, res) => {
     res.send("TaskBuilder server is running...");
