@@ -82,7 +82,53 @@ async function run() {
       console.log(data);
       res.send(data)
     })
-
+    // task add api 
+    app.post('/v1/addtask',async(req,res)=>{
+      const taskdata = req.body.task
+      console.log(taskdata);
+      const data = await taskColl.insertOne(taskdata)
+      res.send(data)
+    })
+    //task delete api
+    app.delete('/v1/deleteTask',async(req,res)=>{
+      const id = req.query.id
+      console.log(id)
+      const data = await taskColl.deleteOne({_id:new ObjectId(id)})
+      console.log(data);
+      res.send(data)
+    })
+    app.get('/v1/task',async(req,res)=>{
+      const id = req.query.id
+      const data = await taskColl.findOne({_id: new ObjectId(id)})
+      console.log(data);
+      res.send(data)
+    })
+    // edit task api
+    app.put('/v1/edittask',async(req,res)=>{
+      const etask = req.body.etask
+      console.log(etask);
+      const id = req.body.id
+      const updatedata = {
+        $set:{
+          "title": etask.title,
+          "description": etask.description,
+          "priority": etask.priority
+        }
+      }
+      const data = await userCollec.updateOne({_id:new ObjectId(id)},updatedata)
+      console.log(data);
+      res.send(data)
+    })
+    app.get('/v1/ongoingtask',async(req,res)=>{
+      const data = await taskColl.find({'status':'ongoing'}).toArray()
+      console.log(data);
+      res.send(data)
+    })
+    app.get('/v1/completedtask',async(req,res)=>{
+      const data = await taskColl.find({'status':'completed'}).toArray()
+      console.log(data);
+      res.send(data)
+    })
 
 
 
